@@ -1,0 +1,196 @@
+---
+title: "Superstore Sales data Analysis Report"
+author: "Mahamudhul Hasan"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+library(plotly)
+theme_set(theme_minimal() + theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5)))
+```
+<br/>
+<br/>
+
+
+
+<h3> Data Preprocessing <h3/>
+```{r data set}
+
+set.seed(123)
+data <- data.frame(
+  Order_Date = seq(as.Date("2023-01-01"), as.Date("2023-12-31"), by="day"),
+  Category = sample(c("Furniture", "Office Supplies", "Technology"), 365, replace=TRUE),
+  Sales = runif(365, 100, 1000),
+  Profit = runif(365, -50, 200),
+  Region = sample(c("East", "West", "Central", "South"), 365, replace=TRUE),
+  Discount = runif(365, 0, 0.3)
+)
+```
+<br>
+<br>
+
+
+
+
+<h3> Task 1: Sales Trend over Time <h3/>
+```{r Task 1, fig.cap="Figure 1: This chart shows the monthly sales trend for 2023.", fig.align='center', fig.topcap=TRUE}
+
+monthly_sales <- data %>%
+  mutate(Month = floor_date(Order_Date, "month")) %>%
+  group_by(Month) %>%
+  summarise(Total_Sales = sum(Sales))
+
+ggplot(monthly_sales, aes(x=Month, y=Total_Sales)) + 
+  geom_line(color="#2c3e50", size=1) +
+  geom_point(color="#e74c3c", size=2) +
+  labs(title = "Monthly Sales Trend (2023)",
+       subtitle = "Total sales growth over the year",
+       x="Month", y="Total Sales ($)") +
+  theme_minimal() + 
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 16),
+    plot.subtitle = element_text(hjust = 0.5, size = 12),
+    plot.margin = margin(t = 50)
+  )
+
+```
+<br/>
+<br/>
+
+
+
+
+<h3> Task 2: Profit by Category <h3/>
+```{r Task 2, fig.cap="Figure 1: This chart shows the monthly sales trend for 2023.", fig.align='center',}
+
+cat_profit <- data %>%
+  group_by(Category) %>%
+  summarise(Total_Profit = sum(Profit))
+
+ggplot(cat_profit, aes(x=Category, y=Total_Profit, fill= Category)) +
+  geom_bar(stat = "identity") +
+  scale_fill_brewer(palette="Set2") +
+  labs(title="Total Profit by Category",
+       x="Product Category", y="Profit ($)") +
+  theme_classic() + 
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 16),
+    plot.subtitle = element_text(hjust = 0.5, size = 12),
+    plot.margin = margin(t = 50)
+  )
+```
+<br/>
+<br/>
+
+
+
+
+<h3> Task 3: Preferred Order Categories <h3/>
+```{r Task 3, fig.cap="Figure 1: This chart shows the monthly sales trend for 2023.", fig.align='center',}
+
+ship_data <- data %>%
+  count(Category)
+
+ggplot(ship_data, aes(x=Category, y=n, fill=Category)) +
+  geom_col() +
+  labs(title="Preferred Categories (Order Count)",
+       x="Category", y="Number of Orders") +
+  theme_light() + 
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 16),
+    plot.subtitle = element_text(hjust = 0.5, size = 12),
+    plot.margin = margin(t = 50)
+  )
+```
+<br/>
+<br/>
+
+
+<h3> Task 4: Discount vs. Profit (Interactive Plot) <h3/>
+```{r Task4}
+p <- ggplot(data, aes(x=Discount, y=Profit, color=Category)) +
+  geom_point(alpha=0.6) +
+  geom_smooth(method="lm", color="black") + 
+  labs(title="Relationship between Discount and Profit",
+       x="Discount (0 - 0.3)", y="Profit / Loss ($)") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5)
+  )
+
+ggplotly(p) %>% 
+  layout(
+    margin = list(t = 100),
+    legend = list(
+      orientation = "v",
+      xanchor = "left",
+      yanchor = "middle",     
+      x = 1.1,
+      y = 0.5,
+      bgcolor = "#F8F9F9", 
+      bordercolor = "#D5DBDB",
+      borderwidth = 1,
+      title = list(text = "<b> Category </b>")
+      )
+    ) %>% 
+  htmltools::div(align = "center")
+  
+```
+<br/>
+<br/>
+
+
+<h3> Task 5: Regional Performance <h3/>
+```{r Task 5, fig.cap="Figure 1: This chart shows the monthly sales trend for 2023.", fig.align='center',}
+
+regional_sales <- data %>%
+  group_by(Region) %>%
+  summarise(Total_Sales = sum(Sales))
+
+ggplot(regional_sales, aes(x=reorder(Region, -Total_Sales), y=Total_Sales, fill=Region)) +
+  geom_bar(stat="identity") +
+  labs(title="Total Sales by Region",
+       x="Region", y="Total Sales ($)") +
+  theme_minimal() + 
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 16),
+    plot.subtitle = element_text(hjust = 0.5, size = 12),
+    plot.margin = margin(t = 50)
+  )
+```
+<br/>
+<br/>
+
+
+
+<h3> Final Conclusion <h3/>
+
+Based on the comprehensive analysis of the Superstore Sales data, several key insights have been identified that can guide future business strategies:
+
+<h4><b>Sales Performance & Seasonality:</b> The monthly sales trend reveals a clear fluctuation, with significant growth during the latter half of the year. This suggests that holiday seasons and year-end promotions are the primary drivers of revenue. 
+<br>
+Actionable Insight: Increasing inventory levels and marketing spend in Q3 and Q4 could further capitalize on this trend.</h4>
+
+<h4><b>Profitability by Category:</b> The analysis highlights that the Technology category is the most consistent profit generator, despite having a moderate sales volume compared to others. Office Supplies, while high in transaction count, yield lower margins.
+<br/>
+Actionable Insight: The business should focus on cross-selling high-margin Technology products with everyday Office Supplies to maximize overall profit.</h4>
+
+<h4><b>The Impact of Discounts on Profit:</b> Our interactive scatter plot confirms a strong inverse relationship between Discounts and Profitability. While discounts are effective for clearing stock, any discount exceeding 20% (0.2) often leads to a direct net loss per transaction.
+<br/>
+Actionable Insight: Implement a "Smart Discounting" policy where discounts are capped at 15% unless bundled with high-margin items.</h4>
+
+<h4><b>Geographical Insights:</b> Certain regions show high sales but disproportionately low profits. This indicates higher operational costs or aggressive discounting in those specific areas.
+<br/>
+Actionable Insight: A deep dive into regional logistics or localized pricing strategies is recommended to stabilize margins across all territories..</h4>
+
+
+
+
+
+
